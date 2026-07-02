@@ -1,0 +1,175 @@
+// KPI Card HTML measures (chrome layer)
+// 8 tiles: 4 for the P&L page, 4 for the Pareto page.
+// Each renders an HTML tile (label, big value, delta chip, sub-label) on a transparent
+// background. The white card container and accent bar are drawn by the canvas background.
+//
+// HOW TO USE (per measure): host in an HTML Content visual, Content field well.
+// No data category needed. The wrapper fits the visual viewport exactly: no scrollbars.
+
+// ============================================================ P&L PAGE
+
+KPI Revenue Card =
+VAR _v = [Total Revenue]
+VAR _bud = CALCULATE ( [Budget (Closed)], REMOVEFILTERS ( dim_account ), dim_account[Category] = "Revenue" )
+VAR _delta = DIVIDE ( _v - _bud, ABS ( _bud ) )
+VAR _valTxt =
+    SWITCH ( TRUE (),
+        ABS ( _v ) >= 1000000, FORMAT ( _v / 1000000, "$0.00" ) & "M",
+        ABS ( _v ) >= 1000, FORMAT ( _v / 1000, "$0" ) & "K",
+        FORMAT ( _v, "$0" ) )
+VAR _chipTxt = IF ( ISBLANK ( _delta ), "n/a", FORMAT ( _delta, "+0.0%;(0.0%);0.0%" ) )
+VAR _pos = NOT ISBLANK ( _delta ) && _delta >= 0
+VAR _chipBg = IF ( ISBLANK ( _delta ), "rgb(241,245,249)", IF ( _pos, "rgb(220,242,229)", "rgb(250,226,226)" ) )
+VAR _chipFg = IF ( ISBLANK ( _delta ), "rgb(100,116,139)", IF ( _pos, "rgb(21,128,61)", "rgb(185,28,28)" ) )
+RETURN
+"<div style='font-family:""Segoe UI"", sans-serif; height:calc(100vh - 2px); box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; justify-content:center; padding:0 4px;'>"
+    & "<div style='font-size:11px; letter-spacing:1.5px; font-weight:600; color:rgb(100,116,139);'>REVENUE</div>"
+    & "<div style='font-size:32px; font-weight:700; color:rgb(15,23,42); line-height:1.1; margin:3px 0 9px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'>" & _valTxt & "</div>"
+    & "<div style='display:flex; align-items:center; gap:8px;'>"
+    & "<span style='font-size:12px; font-weight:700; color:" & _chipFg & "; background:" & _chipBg & "; border-radius:12px; padding:4px 10px; white-space:nowrap;'>" & _chipTxt & "</span>"
+    & "<span style='font-size:10.5px; color:rgb(148,163,184); white-space:nowrap;'>vs budget</span>"
+    & "</div></div>"
+
+KPI Gross Margin Card =
+VAR _v = [Gross Margin %]
+VAR _budRev = CALCULATE ( [Budget (Closed)], REMOVEFILTERS ( dim_account ), dim_account[Category] = "Revenue" )
+VAR _budCogs = CALCULATE ( [Budget (Closed)], REMOVEFILTERS ( dim_account ), dim_account[Category] = "Cost of Goods Sold" )
+VAR _budGm = DIVIDE ( _budRev + _budCogs, _budRev )
+VAR _deltaPp = ( _v - _budGm ) * 100
+VAR _valTxt = FORMAT ( _v, "0.0%" )
+VAR _chipTxt = IF ( ISBLANK ( _deltaPp ), "n/a", FORMAT ( _deltaPp, "+0.0;(0.0);0.0" ) & " pp" )
+VAR _pos = NOT ISBLANK ( _deltaPp ) && _deltaPp >= 0
+VAR _chipBg = IF ( ISBLANK ( _deltaPp ), "rgb(241,245,249)", IF ( _pos, "rgb(220,242,229)", "rgb(250,226,226)" ) )
+VAR _chipFg = IF ( ISBLANK ( _deltaPp ), "rgb(100,116,139)", IF ( _pos, "rgb(21,128,61)", "rgb(185,28,28)" ) )
+RETURN
+"<div style='font-family:""Segoe UI"", sans-serif; height:calc(100vh - 2px); box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; justify-content:center; padding:0 4px;'>"
+    & "<div style='font-size:11px; letter-spacing:1.5px; font-weight:600; color:rgb(100,116,139);'>GROSS MARGIN</div>"
+    & "<div style='font-size:32px; font-weight:700; color:rgb(15,23,42); line-height:1.1; margin:3px 0 9px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'>" & _valTxt & "</div>"
+    & "<div style='display:flex; align-items:center; gap:8px;'>"
+    & "<span style='font-size:12px; font-weight:700; color:" & _chipFg & "; background:" & _chipBg & "; border-radius:12px; padding:4px 10px; white-space:nowrap;'>" & _chipTxt & "</span>"
+    & "<span style='font-size:10.5px; color:rgb(148,163,184); white-space:nowrap;'>vs budget</span>"
+    & "</div></div>"
+
+KPI EBITDA Card =
+VAR _v = [EBITDA]
+VAR _bud = CALCULATE ( [Budget (Closed)], REMOVEFILTERS ( dim_account ), dim_account[Category] <> "Depreciation" )
+VAR _delta = DIVIDE ( _v - _bud, ABS ( _bud ) )
+VAR _valTxt =
+    SWITCH ( TRUE (),
+        ABS ( _v ) >= 1000000, FORMAT ( _v / 1000000, "$0.00" ) & "M",
+        ABS ( _v ) >= 1000, FORMAT ( _v / 1000, "$0" ) & "K",
+        FORMAT ( _v, "$0" ) )
+VAR _chipTxt = IF ( ISBLANK ( _delta ), "n/a", FORMAT ( _delta, "+0.0%;(0.0%);0.0%" ) )
+VAR _pos = NOT ISBLANK ( _delta ) && _delta >= 0
+VAR _chipBg = IF ( ISBLANK ( _delta ), "rgb(241,245,249)", IF ( _pos, "rgb(220,242,229)", "rgb(250,226,226)" ) )
+VAR _chipFg = IF ( ISBLANK ( _delta ), "rgb(100,116,139)", IF ( _pos, "rgb(21,128,61)", "rgb(185,28,28)" ) )
+RETURN
+"<div style='font-family:""Segoe UI"", sans-serif; height:calc(100vh - 2px); box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; justify-content:center; padding:0 4px;'>"
+    & "<div style='font-size:11px; letter-spacing:1.5px; font-weight:600; color:rgb(100,116,139);'>EBITDA</div>"
+    & "<div style='font-size:32px; font-weight:700; color:rgb(15,23,42); line-height:1.1; margin:3px 0 9px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'>" & _valTxt & "</div>"
+    & "<div style='display:flex; align-items:center; gap:8px;'>"
+    & "<span style='font-size:12px; font-weight:700; color:" & _chipFg & "; background:" & _chipBg & "; border-radius:12px; padding:4px 10px; white-space:nowrap;'>" & _chipTxt & "</span>"
+    & "<span style='font-size:10.5px; color:rgb(148,163,184); white-space:nowrap;'>vs budget</span>"
+    & "</div></div>"
+
+KPI Operating Profit Card =
+VAR _v = [Operating Profit]
+VAR _bud = CALCULATE ( [Budget (Closed)], REMOVEFILTERS ( dim_account ) )
+VAR _delta = DIVIDE ( _v - _bud, ABS ( _bud ) )
+VAR _valTxt =
+    SWITCH ( TRUE (),
+        ABS ( _v ) >= 1000000, FORMAT ( _v / 1000000, "$0.00" ) & "M",
+        ABS ( _v ) >= 1000, FORMAT ( _v / 1000, "$0" ) & "K",
+        FORMAT ( _v, "$0" ) )
+VAR _chipTxt = IF ( ISBLANK ( _delta ), "n/a", FORMAT ( _delta, "+0.0%;(0.0%);0.0%" ) )
+VAR _pos = NOT ISBLANK ( _delta ) && _delta >= 0
+VAR _chipBg = IF ( ISBLANK ( _delta ), "rgb(241,245,249)", IF ( _pos, "rgb(220,242,229)", "rgb(250,226,226)" ) )
+VAR _chipFg = IF ( ISBLANK ( _delta ), "rgb(100,116,139)", IF ( _pos, "rgb(21,128,61)", "rgb(185,28,28)" ) )
+RETURN
+"<div style='font-family:""Segoe UI"", sans-serif; height:calc(100vh - 2px); box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; justify-content:center; padding:0 4px;'>"
+    & "<div style='font-size:11px; letter-spacing:1.5px; font-weight:600; color:rgb(100,116,139);'>OPERATING PROFIT</div>"
+    & "<div style='font-size:32px; font-weight:700; color:rgb(15,23,42); line-height:1.1; margin:3px 0 9px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'>" & _valTxt & "</div>"
+    & "<div style='display:flex; align-items:center; gap:8px;'>"
+    & "<span style='font-size:12px; font-weight:700; color:" & _chipFg & "; background:" & _chipBg & "; border-radius:12px; padding:4px 10px; white-space:nowrap;'>" & _chipTxt & "</span>"
+    & "<span style='font-size:10.5px; color:rgb(148,163,184); white-space:nowrap;'>vs budget</span>"
+    & "</div></div>"
+
+// ============================================================ PARETO PAGE
+
+KPI Product Revenue Card =
+VAR _v = [Product Revenue]
+VAR _py = CALCULATE ( [Product Revenue], SAMEPERIODLASTYEAR ( dim_date[Date] ) )
+VAR _delta = DIVIDE ( _v - _py, ABS ( _py ) )
+VAR _valTxt =
+    SWITCH ( TRUE (),
+        ABS ( _v ) >= 1000000, FORMAT ( _v / 1000000, "$0.00" ) & "M",
+        ABS ( _v ) >= 1000, FORMAT ( _v / 1000, "$0" ) & "K",
+        FORMAT ( _v, "$0" ) )
+VAR _chipTxt = IF ( ISBLANK ( _delta ), "n/a", FORMAT ( _delta, "+0.0%;(0.0%);0.0%" ) )
+VAR _pos = NOT ISBLANK ( _delta ) && _delta >= 0
+VAR _chipBg = IF ( ISBLANK ( _delta ), "rgb(241,245,249)", IF ( _pos, "rgb(220,242,229)", "rgb(250,226,226)" ) )
+VAR _chipFg = IF ( ISBLANK ( _delta ), "rgb(100,116,139)", IF ( _pos, "rgb(21,128,61)", "rgb(185,28,28)" ) )
+RETURN
+"<div style='font-family:""Segoe UI"", sans-serif; height:calc(100vh - 2px); box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; justify-content:center; padding:0 4px;'>"
+    & "<div style='font-size:11px; letter-spacing:1.5px; font-weight:600; color:rgb(100,116,139);'>PRODUCT REVENUE</div>"
+    & "<div style='font-size:32px; font-weight:700; color:rgb(15,23,42); line-height:1.1; margin:3px 0 9px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'>" & _valTxt & "</div>"
+    & "<div style='display:flex; align-items:center; gap:8px;'>"
+    & "<span style='font-size:12px; font-weight:700; color:" & _chipFg & "; background:" & _chipBg & "; border-radius:12px; padding:4px 10px; white-space:nowrap;'>" & _chipTxt & "</span>"
+    & "<span style='font-size:10.5px; color:rgb(148,163,184); white-space:nowrap;'>vs last year</span>"
+    & "</div></div>"
+
+KPI Units Sold Card =
+VAR _v = [Product Units]
+VAR _py = CALCULATE ( [Product Units], SAMEPERIODLASTYEAR ( dim_date[Date] ) )
+VAR _delta = DIVIDE ( _v - _py, ABS ( _py ) )
+VAR _valTxt =
+    SWITCH ( TRUE (),
+        ABS ( _v ) >= 1000000, FORMAT ( _v / 1000000, "0.00" ) & "M",
+        ABS ( _v ) >= 1000, FORMAT ( _v / 1000, "0.0" ) & "K",
+        FORMAT ( _v, "0" ) )
+VAR _chipTxt = IF ( ISBLANK ( _delta ), "n/a", FORMAT ( _delta, "+0.0%;(0.0%);0.0%" ) )
+VAR _pos = NOT ISBLANK ( _delta ) && _delta >= 0
+VAR _chipBg = IF ( ISBLANK ( _delta ), "rgb(241,245,249)", IF ( _pos, "rgb(220,242,229)", "rgb(250,226,226)" ) )
+VAR _chipFg = IF ( ISBLANK ( _delta ), "rgb(100,116,139)", IF ( _pos, "rgb(21,128,61)", "rgb(185,28,28)" ) )
+RETURN
+"<div style='font-family:""Segoe UI"", sans-serif; height:calc(100vh - 2px); box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; justify-content:center; padding:0 4px;'>"
+    & "<div style='font-size:11px; letter-spacing:1.5px; font-weight:600; color:rgb(100,116,139);'>UNITS SOLD</div>"
+    & "<div style='font-size:32px; font-weight:700; color:rgb(15,23,42); line-height:1.1; margin:3px 0 9px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'>" & _valTxt & "</div>"
+    & "<div style='display:flex; align-items:center; gap:8px;'>"
+    & "<span style='font-size:12px; font-weight:700; color:" & _chipFg & "; background:" & _chipBg & "; border-radius:12px; padding:4px 10px; white-space:nowrap;'>" & _chipTxt & "</span>"
+    & "<span style='font-size:10.5px; color:rgb(148,163,184); white-space:nowrap;'>vs last year</span>"
+    & "</div></div>"
+
+KPI Vital Few Card =
+VAR _prods = FILTER ( ALLSELECTED ( dim_product ), NOT ISBLANK ( [Product Revenue] ) )
+VAR _nAll = COUNTROWS ( _prods )
+VAR _n80 = COUNTROWS ( FILTER ( _prods, [Cumulative Revenue %] < 0.80 ) ) + 1
+VAR _share = DIVIDE ( _n80, _nAll )
+VAR _valTxt = IF ( ISBLANK ( _nAll ) || _nAll = 0, "n/a", _n80 & " SKUs" )
+VAR _chipTxt = IF ( ISBLANK ( _share ), "n/a", FORMAT ( _share, "0%" ) & " of catalog" )
+RETURN
+"<div style='font-family:""Segoe UI"", sans-serif; height:calc(100vh - 2px); box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; justify-content:center; padding:0 4px;'>"
+    & "<div style='font-size:11px; letter-spacing:1.5px; font-weight:600; color:rgb(100,116,139);'>THE VITAL FEW</div>"
+    & "<div style='font-size:32px; font-weight:700; color:rgb(15,23,42); line-height:1.1; margin:3px 0 9px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'>" & _valTxt & "</div>"
+    & "<div style='display:flex; align-items:center; gap:8px;'>"
+    & "<span style='font-size:12px; font-weight:700; color:rgb(21,128,61); background:rgb(220,242,229); border-radius:12px; padding:4px 10px; white-space:nowrap;'>" & _chipTxt & "</span>"
+    & "<span style='font-size:10.5px; color:rgb(148,163,184); white-space:nowrap;'>drive 80% of revenue</span>"
+    & "</div></div>"
+
+KPI Top Product Card =
+VAR _prods = FILTER ( ALLSELECTED ( dim_product ), NOT ISBLANK ( [Product Revenue] ) )
+VAR _topTbl = TOPN ( 1, _prods, [Product Revenue] + dim_product[ProductKey] / 1000000000, DESC )
+VAR _name = MAXX ( _topTbl, dim_product[ProductName] )
+VAR _rev = MAXX ( _topTbl, [Product Revenue] )
+VAR _share = DIVIDE ( _rev, CALCULATE ( [Product Revenue], ALLSELECTED ( dim_product ) ) )
+VAR _valTxt = IF ( ISBLANK ( _name ), "n/a", _name )
+VAR _chipTxt = IF ( ISBLANK ( _share ), "n/a", FORMAT ( _share, "0.0%" ) & " of revenue" )
+RETURN
+"<div style='font-family:""Segoe UI"", sans-serif; height:calc(100vh - 2px); box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column; justify-content:center; padding:0 4px;'>"
+    & "<div style='font-size:11px; letter-spacing:1.5px; font-weight:600; color:rgb(100,116,139);'>TOP PRODUCT</div>"
+    & "<div style='font-size:19px; font-weight:700; color:rgb(15,23,42); line-height:1.1; margin:3px 0 9px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'>" & _valTxt & "</div>"
+    & "<div style='display:flex; align-items:center; gap:8px;'>"
+    & "<span style='font-size:12px; font-weight:700; color:rgb(180,83,9); background:rgb(255,237,213); border-radius:12px; padding:4px 10px; white-space:nowrap;'>" & _chipTxt & "</span>"
+    & "<span style='font-size:10.5px; color:rgb(148,163,184); white-space:nowrap;'>by revenue</span>"
+    & "</div></div>"
+

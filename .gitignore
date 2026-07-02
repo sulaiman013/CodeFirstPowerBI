@@ -1,0 +1,12 @@
+# Power BI Desktop local state
+**/.pbi/localSettings.json
+**/.pbi/editorSettings.json
+**/cache.abf
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db

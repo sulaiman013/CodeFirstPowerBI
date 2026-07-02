@@ -1,0 +1,84 @@
+// HTML P&L Statement
+// Step 3 prototype: the full P&L statement page rendered by one DAX measure.
+// Host visual: HTML Content (lite). Drop this measure into the Content field well.
+// Responds to date / region / store slicers through normal filter context.
+// Design tokens: text #0f172a, muted #64748b, positive #16a34a, negative #dc2626,
+// accent #2d6a4f (TrailPeak green), borders #e2e8f0.
+
+HTML P&L Statement =
+VAR _lastClosedRaw = [Last Closed Date]
+VAR _lastClosed = IF ( ISBLANK ( _lastClosedRaw ), MAX ( dim_date[Date] ), _lastClosedRaw )
+VAR _firstData = CALCULATE ( MIN ( fact_pnl_actuals[Date] ), REMOVEFILTERS () )
+VAR _fromDate = MAX ( MIN ( dim_date[Date] ), _firstData )
+VAR _toDate = MIN ( MAX ( dim_date[Date] ), _lastClosed )
+VAR _period =
+    IF (
+        HASONEVALUE ( dim_date[YearMonthKey] ),
+        SELECTEDVALUE ( dim_date[YearMonthLabel] ),
+        FORMAT ( _fromDate, "MMM YYYY" ) & " to " & FORMAT ( _toDate, "MMM YYYY" )
+    )
+VAR _scope =
+    SWITCH (
+        TRUE (),
+        HASONEVALUE ( dim_store[StoreName] ), SELECTEDVALUE ( dim_store[StoreName] ),
+        HASONEVALUE ( dim_store[Region] ), SELECTEDVALUE ( dim_store[Region] ) & " Region",
+        "All Stores"
+    )
+VAR _rows =
+    CONCATENATEX (
+        ALLSELECTED ( dim_pnl_layout ),
+        VAR _v = [P&L Line Value]
+        VAR _b = [Budget Line Value]
+        VAR _d = [Line Variance]
+        VAR _p = [Line Variance %]
+        VAR _isTotal = dim_pnl_layout[RowType] = "Total"
+        VAR _isSubtotal = dim_pnl_layout[RowType] = "Subtotal"
+        VAR _padLeft = 10 + dim_pnl_layout[Indent] * 18
+        VAR _weight = IF ( dim_pnl_layout[IsBold] = 1, "600", "400" )
+        VAR _rowStyle =
+            SWITCH (
+                TRUE (),
+                _isTotal, "border-top:2px solid #0f172a; background:#f4faf6;",
+                _isSubtotal, "border-top:1px solid #cbd5e1;",
+                ""
+            )
+        VAR _varColor =
+            IF ( ISBLANK ( _d ), "#94a3b8", IF ( _d >= 0, "#16a34a", "#dc2626" ) )
+        RETURN
+            "<tr style='" & _rowStyle & "'>"
+                & "<td style='padding:7px 10px 7px " & _padLeft
+                & "px; font-weight:" & _weight & "; color:#0f172a;'>"
+                & dim_pnl_layout[LineLabel] & "</td>"
+                & "<td style='padding:7px 10px; text-align:right; font-weight:" & _weight
+                & "; color:#0f172a;'>" & IF ( ISBLANK ( _v ), "-", FORMAT ( _v, "#,##0;(#,##0)" ) ) & "</td>"
+                & "<td style='padding:7px 10px; text-align:right; color:#64748b;'>"
+                & IF ( ISBLANK ( _b ), "-", FORMAT ( _b, "#,##0;(#,##0)" ) ) & "</td>"
+                & "<td style='padding:7px 10px; text-align:right; font-weight:" & _weight
+                & "; color:" & _varColor & ";'>"
+                & IF ( ISBLANK ( _d ), "-", FORMAT ( _d, "+#,##0;(#,##0);0" ) ) & "</td>"
+                & "<td style='padding:7px 10px; text-align:right; color:" & _varColor & ";'>"
+                & IF ( ISBLANK ( _p ), "-", FORMAT ( _p, "+0.0%;(0.0%);0.0%" ) ) & "</td>"
+                & "</tr>",
+        ,
+        dim_pnl_layout[LineKey], ASC
+    )
+RETURN
+    "<div style='font-family:""Segoe UI"", sans-serif; background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:16px 22px; height:calc(100vh - 6px); box-sizing:border-box; overflow:hidden; display:flex; flex-direction:column;'>"
+        & "<div style='display:flex; justify-content:space-between; align-items:baseline; margin-bottom:2px;'>"
+        & "<div style='font-size:19px; font-weight:700; color:#0f172a;'>Profit &amp; Loss Statement</div>"
+        & "<div style='font-size:12px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#2d6a4f;'>TrailPeak Outfitters</div>"
+        & "</div>"
+        & "<div style='font-size:13px; color:#64748b; margin-bottom:12px;'>" & _period
+        & " &#183; " & _scope & " &#183; Actual vs Budget</div>"
+        & "<table style='width:100%; border-collapse:collapse; font-size:13.5px;'>"
+        & "<thead><tr style='border-bottom:2px solid #0f172a;'>"
+        & "<th style='padding:6px 10px; text-align:left; font-size:11.5px; letter-spacing:0.08em; text-transform:uppercase; color:#64748b;'>Line</th>"
+        & "<th style='padding:6px 10px; text-align:right; font-size:11.5px; letter-spacing:0.08em; text-transform:uppercase; color:#64748b;'>Actual</th>"
+        & "<th style='padding:6px 10px; text-align:right; font-size:11.5px; letter-spacing:0.08em; text-transform:uppercase; color:#64748b;'>Budget</th>"
+        & "<th style='padding:6px 10px; text-align:right; font-size:11.5px; letter-spacing:0.08em; text-transform:uppercase; color:#64748b;'>Variance</th>"
+        & "<th style='padding:6px 10px; text-align:right; font-size:11.5px; letter-spacing:0.08em; text-transform:uppercase; color:#64748b;'>Var %</th>"
+        & "</tr></thead><tbody>" & _rows & "</tbody></table>"
+        & "<div style='margin-top:12px; font-size:11.5px; color:#94a3b8;'>"
+        & [Data Through Label]
+        & " &#183; Variance blank for unclosed months &#183; HTML prototype, production visual ships in Deneb</div>"
+        & "</div>"
