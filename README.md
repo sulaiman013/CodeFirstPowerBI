@@ -89,6 +89,6 @@ All company names, people, and numbers in this repository are fictional and synt
 
 ## Author
 
-**Sulaiman Ahmed** · [LinkedIn](https://www.linkedin.com/in/sulaiman-ahmed-8a870512a/) · Blog post: coming soon on my portfolio site.
+**Sulaiman Ahmed** · [LinkedIn](https://www.linkedin.com/in/sulaimanahmed)
 
 If you build something with this workflow, I would love to see it.
